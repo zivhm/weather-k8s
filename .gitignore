@@ -1,0 +1,13 @@
+uv.lock
+.python-version
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Terraform local artifacts/state
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
