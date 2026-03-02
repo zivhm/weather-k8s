@@ -9,7 +9,6 @@ env:
   REGION: us-central1                                                                                             
   REPOSITORY: weather                                                                                             
   IMAGE_NAME: weather-app                                                                                         
-  DOCKER_CONTEXT: ./apps/weather                                                                                  
   IMAGE_TAG: ${{ github.sha }}                                                                                    
   IMAGE_URI: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/weather/weather-app   
 
