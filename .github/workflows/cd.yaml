@@ -1,0 +1,46 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  CLUSTER_NAME: weather-cluster
+  CLUSTER_ZONE: us-central1-a
+  IMAGE_URI: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/weather/weather-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+    
+      - name: Auth to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+    
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+    
+      - name: GKE credentials
+        run: gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${CLUSTER_ZONE} --project ${PROJECT_ID}
+
+      - name: Apply k8s manifests
+        run: |
+          kubectl apply -f deploy/k8s/namespace.yaml
+          kubectl apply -f deploy/k8s/configmap.yaml
+          kubectl apply -f deploy/k8s/secret.yaml
+          kubectl apply -f deploy/k8s/deployment.yaml
+          kubectl apply -f deploy/k8s/service.yaml
+    
+      - name: Set image to commit SHA
+        run: kubectl -n weather set image deployment/weather-app weather-app=${IMAGE_URI}:${GITHUB_SHA}
+
+      - name: Wait for rollout
+        run: kubectl -n weather rollout status deployment/weather-app --timeout=180s
