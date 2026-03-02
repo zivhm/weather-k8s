@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+env:                                                                                                              
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}                                                                       
+  REGION: us-central1                                                                                             
+  REPOSITORY: weather                                                                                             
+  IMAGE_NAME: weather-app                                                                                         
+  DOCKER_CONTEXT: ./apps/weather                                                                                  
+  IMAGE_TAG: ${{ github.sha }}                                                                                    
+  IMAGE_URI: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/weather/weather-app   
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/weather
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv pip install --system -r requirements.txt pytest
+
+      - name: Syntax check
+        run: python -m py_compile app.py
+
+      - name: Run unit tests
+        run: pytest -q
+
+      - name: Build Docker image
+        run: docker build -t weather-app:${{ github.sha }} .

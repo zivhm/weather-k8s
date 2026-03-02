@@ -5,8 +5,9 @@ uv.lock
 .venv/
 __pycache__/
 *.pyc
+.pytest_cache/
 
-# Terraform local artifacts/state
+# Terraform
 **/.terraform/
 *.tfstate
 *.tfstate.*
