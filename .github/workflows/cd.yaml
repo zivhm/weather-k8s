@@ -31,6 +31,9 @@ jobs:
       - name: GKE credentials
         run: gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${CLUSTER_ZONE} --project ${PROJECT_ID}
 
+      - name: Set image to commit SHA
+        run: kubectl -n weather set image deployment/weather-app weather-app=${IMAGE_URI}:${GITHUB_SHA}
+
       - name: Apply k8s manifests
         run: |
           kubectl apply -f deploy/k8s/namespace.yaml
@@ -38,9 +41,6 @@ jobs:
           kubectl apply -f deploy/k8s/secret.yaml
           kubectl apply -f deploy/k8s/deployment.yaml
           kubectl apply -f deploy/k8s/service.yaml
-    
-      - name: Set image to commit SHA
-        run: kubectl -n weather set image deployment/weather-app weather-app=${IMAGE_URI}:${GITHUB_SHA}
 
       - name: Wait for rollout
         run: kubectl -n weather rollout status deployment/weather-app --timeout=180s
