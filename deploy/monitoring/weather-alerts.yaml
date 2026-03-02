@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: weather-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: weather.rules
+      rules:
+        - alert: WeatherAppNoRunningPods
+          expr: sum(kube_deployment_status_replicas_available{namespace="weather",deployment="weather-app"}) < 1
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Weather app has no running pods"
+            description: "No running weather-app pods detected in weather namespace for 2 minutes."
