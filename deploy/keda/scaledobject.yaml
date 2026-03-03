@@ -1,0 +1,17 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: weather-cpu-scaledobject 
+  namespace: weather
+spec:
+  scaleTargetRef:
+    name: weather-app
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  pollingInterval: 30
+  cooldownPeriod: 300
+  triggers:
+  - type: cpu
+    metricType: Utilization
+    metadata:
+      value: "75"

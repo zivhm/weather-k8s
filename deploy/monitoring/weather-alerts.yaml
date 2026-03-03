@@ -17,3 +17,4 @@ spec:
           annotations:
             summary: "Weather app has no running pods"
             description: "No running weather-app pods detected in weather namespace for 2 minutes."
+            

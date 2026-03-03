@@ -1,0 +1,4 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Namespace
+metadata:
+  name: logging
