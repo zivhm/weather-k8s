@@ -1,7 +1,11 @@
 name: CD
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
     branches:
       - master
 
@@ -14,11 +18,14 @@ env:
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
     
       - name: Auth to GCP
         uses: google-github-actions/auth@v2
@@ -31,9 +38,6 @@ jobs:
       - name: GKE credentials
         run: gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${CLUSTER_ZONE} --project ${PROJECT_ID}
 
-      - name: Set image to commit SHA
-        run: kubectl -n weather set image deployment/weather-app weather-app=${IMAGE_URI}:${GITHUB_SHA}
-
       - name: Apply k8s manifests
         run: |
           kubectl apply -f deploy/k8s/namespace.yaml
@@ -42,5 +46,12 @@ jobs:
           kubectl apply -f deploy/k8s/deployment.yaml
           kubectl apply -f deploy/k8s/service.yaml
 
+      - name: Set image to commit SHA
+        run: kubectl -n weather set image deployment/weather-app weather-app=${IMAGE_URI}:${{ github.event.workflow_run.head_sha }}
+
       - name: Wait for rollout
         run: kubectl -n weather rollout status deployment/weather-app --timeout=180s
+
+      - name: Verify deployed image
+        run: kubectl -n weather get deploy weather-app -o jsonpath='{.spec.template.spec.containers[0].image}'
+

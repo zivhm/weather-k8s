@@ -1,10 +1,10 @@
-# configure gcp provider
+# gcp provider
 provider "google" {
   project = var.project_id
   region  = var.region
 }
 
-# create vpc and subnet                                              
+# vpc and subnet                                              
 resource "google_compute_network" "vpc" {
   name                    = "${var.cluster_name}-vpc"
   auto_create_subnetworks = false
@@ -16,7 +16,7 @@ resource "google_compute_subnetwork" "subnet" {
   network       = google_compute_network.vpc.id
 }
 
-# create cluster
+# cluster
 resource "google_container_cluster" "primary" {
   name                     = var.cluster_name
   location                 = var.cluster_location
@@ -28,12 +28,23 @@ resource "google_container_cluster" "primary" {
   ip_allocation_policy {}
 }
 
-# create managed node pool
+# managed node pool
 resource "google_container_node_pool" "primary_nodes" {
-  name       = "${var.cluster_name}-np"
-  location   = var.cluster_location
-  cluster    = google_container_cluster.primary.name
-  node_count = var.node_count
+  name               = "${var.cluster_name}-np"
+  location           = var.cluster_location
+  cluster            = google_container_cluster.primary.name
+  initial_node_count = var.node_count
+
+  autoscaling {
+    min_node_count = var.min_node_count
+    max_node_count = var.max_node_count
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = true
+  }
+
   node_config {
     machine_type = var.machine_type
     oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]

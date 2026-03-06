@@ -1,24 +1,26 @@
-clusterName: weather-logs                                                                                                           
-nodeGroup: master                                                                                                                   
-replicas: 1                                                                                                                         
-minimumMasterNodes: 1                                                                                                               
-                                                                                                                                    
-esConfig:                                                                                                                           
-  elasticsearch.yml: |                                                                                                              
-    xpack.security.enabled: false                                                                                                   
-                                                                                                                                    
-esJavaOpts: "-Xms384m -Xmx384m"                                                                                                     
-                                                                                                                                    
-resources:                                                                                                                          
-  requests:                                                                                                                         
-    cpu: "100m"                                                                                                                     
-    memory: "768Mi"                                                                                                                 
-  limits:                                                                                                                           
-    cpu: "300m"                                                                                                                     
-    memory: "768Mi"                                                                                                                 
-                                                                                                                                    
-volumeClaimTemplate:                                                                                                                
-  accessModes: [ "ReadWriteOnce" ]                                                                                                  
-  resources:                                                                                                                        
-    requests:                                                                                                                       
+clusterName: weather-logs
+nodeGroup: master
+replicas: 1
+minimumMasterNodes: 1
+
+clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
+
+esConfig:
+  elasticsearch.yml: |
+    xpack.security.enabled: true
+
+esJavaOpts: "-Xms384m -Xmx384m"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "768Mi"
+  limits:
+    cpu: "300m"
+    memory: "768Mi"
+
+volumeClaimTemplate:
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
       storage: 10Gi  

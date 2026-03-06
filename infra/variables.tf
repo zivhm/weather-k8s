@@ -23,8 +23,17 @@ variable "node_count" {
   default = 1
 }
 
+variable "min_node_count" {
+  type    = number
+  default = 1
+}
+
+variable "max_node_count" {
+  type    = number
+  default = 3
+}
+
 variable "machine_type" {
   type    = string
   default = "e2-medium"
 }
-                                     

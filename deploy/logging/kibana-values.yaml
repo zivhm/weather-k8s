@@ -1,5 +1,13 @@
-elasticsearchHosts: "http://weather-logs-master.logging.svc.cluster.local:9200"                         
-protocol: http                                                                                          
-                                                                                                        
-service:                                                                                                
-  type: LoadBalancer 
+elasticsearchHosts: "https://weather-logs-master.logging.svc:9200"
+elasticsearchCertificateSecret: "weather-logs-master-certs"
+elasticsearchCredentialSecret: "weather-logs-master-credentials"
+service:
+  type: LoadBalancer
+
+resources:
+  requests:
+    cpu: "150m"
+    memory: "512Mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
