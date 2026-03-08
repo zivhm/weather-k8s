@@ -16,7 +16,7 @@ spec:
       containers:
         - name: weather-app
           image: us-central1-docker.pkg.dev/devops-486417/weather/weather-app:stable
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           envFrom:

@@ -8,4 +8,5 @@ data:
   GEOCODING_API_URL: "https://geocoding-api.open-meteo.com/v1/search"                                                                        
   WEATHER_API_URL: "https://api.open-meteo.com/v1/forecast"                                                                                  
   WEATHER_HTTP_TIMEOUT_SECONDS: "8"                                                                                                          
-  PORT: "8080"   
+  PORT: "8080"
+  LOG_LEVEL: "INFO"
