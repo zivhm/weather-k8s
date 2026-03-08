@@ -65,8 +65,12 @@ jobs:
       
       - name: Tag image for Artifact Registry
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        run: docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_URI}:${IMAGE_TAG}
+        run: |
+          docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_URI}:${IMAGE_TAG}
+          docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_URI}:stable
                                                                                                                         
-      - name: Push image
+      - name: Push images
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        run: docker push ${IMAGE_URI}:${IMAGE_TAG}
+        run: |
+          docker push ${IMAGE_URI}:${IMAGE_TAG}
+          docker push ${IMAGE_URI}:stable
