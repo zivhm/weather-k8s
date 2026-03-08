@@ -17,7 +17,7 @@ Small production-like platform on GKE with Terraform, GitHub Actions CI/CD, Prom
 
 - Terraform-managed GKE cluster with networking
 - Weather app deployed as a Kubernetes `Deployment` and exposed by a `LoadBalancer` `Service`
-- GitHub Actions CI that tests and builds on pull requests, then pushes commit-SHA and `stable` tags on `main`/`master`
+- GitHub Actions CI that tests and builds on pull requests, then pushes commit-SHA and `stable` tags on `main`
 - GitHub Actions CD that deploys the exact commit SHA after CI succeeds
 - Prometheus + Grafana via `kube-prometheus-stack`
 - KEDA CPU-based autoscaling for the weather app
@@ -108,7 +108,7 @@ File: [`.github/workflows/ci.yaml`](.github/workflows/ci.yaml)
 - Syntax checks `app.py`
 - Runs `pytest`
 - Builds Docker image
-- On push to `main` or `master`, pushes:
+- On push to `main`, pushes:
   - `weather-app:<commit-sha>`
   - `weather-app:stable`
 
