@@ -20,20 +20,20 @@ variable "cluster_name" {
 
 variable "node_count" {
   type    = number
-  default = 1
+  default = 2
 }
 
 variable "min_node_count" {
   type    = number
-  default = 1
+  default = 2
 }
 
 variable "max_node_count" {
   type    = number
-  default = 3
+  default = 4
 }
 
 variable "machine_type" {
   type    = string
-  default = "e2-medium"
+  default = "e2-standard-2"
 }
