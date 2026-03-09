@@ -130,10 +130,15 @@ docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_URI}:stable"
 docker push "${IMAGE_URI}:${IMAGE_TAG}"
 docker push "${IMAGE_URI}:stable"
 
-# Apply the base Kubernetes manifests for namespace, config, secret, service, and deployment.
+# Apply the weather namespace before any namespaced app resources.
 kubectl apply -f deploy/k8s/namespace.yaml
-kubectl create namespace weather --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f deploy/k8s/
+
+# Apply the app ConfigMap, Secret, Service, and Deployment in a safe order.
+kubectl apply -f deploy/k8s/configmap.yaml
+kubectl apply -f deploy/k8s/secret.yaml
+kubectl apply -f deploy/k8s/service.yaml
+kubectl apply -f deploy/k8s/deployment.yaml
+
 # Override the deployment image to the exact image tag built in this script for traceable rollout.
 kubectl -n weather set image deployment/weather-app weather-app="${IMAGE_URI}:${IMAGE_TAG}"
 
@@ -205,15 +210,21 @@ helm upgrade --install fluent-bit fluent/fluent-bit \
   --wait \
   --timeout 15m
 
+# Read the generated Elasticsearch password used to log into Kibana.
+KIBANA_PASSWORD="$(kubectl -n logging get secret weather-logs-master-credentials -o jsonpath='{.data.password}' | base64 -d)"
+
 echo
 echo "Done"
 echo "Image: ${IMAGE_URI}:${IMAGE_TAG}"
 echo "Service IP: ${EXTERNAL_IP:-pending}"
+echo "Kibana user: elastic"
+echo "Kibana password: ${KIBANA_PASSWORD}"
 echo "Checks:"
 echo "  kubectl -n weather get svc weather-service"
 echo "  kubectl -n monitoring get pods"
 echo "  kubectl -n weather get scaledobject,hpa"
 echo "  kubectl -n logging get pods"
+echo "  kubectl -n logging port-forward svc/kibana-kibana 5601:5601"
 
 if [[ -n "$EXTERNAL_IP" ]] && command -v curl >/dev/null 2>&1; then
   echo
