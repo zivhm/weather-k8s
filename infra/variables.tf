@@ -18,6 +18,11 @@ variable "cluster_name" {
   default = "weather-cluster"
 }
 
+variable "artifact_repository" {
+  type    = string
+  default = "weather"
+}
+
 variable "node_count" {
   type    = number
   default = 2

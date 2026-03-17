@@ -33,6 +33,12 @@ REGION="${CLUSTER_ZONE%-*}"
 REPOSITORY="weather"
 IMAGE_NAME="weather-app"
 IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}"
+WINDY_WEBCAMS_API_KEY="${WINDY_WEBCAMS_API_KEY:-}"
+
+if [[ "$DESTROY_MODE" == false && -t 0 && -z "$WINDY_WEBCAMS_API_KEY" ]]; then
+  read -rsp "Windy Webcams API key (optional, press Enter to skip): " WINDY_WEBCAMS_API_KEY
+  echo
+fi
 
 if git rev-parse --short HEAD >/dev/null 2>&1; then
   IMAGE_TAG="$(git rev-parse --short HEAD)"
@@ -108,14 +114,6 @@ gcloud container clusters get-credentials "$CLUSTER_NAME" \
 # Confirm the cluster is reachable and nodes are registered.
 kubectl get nodes
 
-# Create the Artifact Registry Docker repository if it does not already exist.
-if ! gcloud artifacts repositories describe "$REPOSITORY" --location "$REGION" --project "$PROJECT_ID" >/dev/null 2>&1; then
-  gcloud artifacts repositories create "$REPOSITORY" \
-    --repository-format=docker \
-    --location="$REGION" \
-    --project="$PROJECT_ID"
-fi
-
 # Configure Docker to authenticate pushes to this region's Artifact Registry endpoint.
 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 
@@ -133,11 +131,14 @@ docker push "${IMAGE_URI}:stable"
 # Apply the weather namespace before any namespaced app resources.
 kubectl apply -f deploy/k8s/namespace.yaml
 
-# Apply the app ConfigMap, Secret, Service, and Deployment in a safe order.
-kubectl apply -f deploy/k8s/configmap.yaml
-kubectl apply -f deploy/k8s/secret.yaml
-kubectl apply -f deploy/k8s/service.yaml
-kubectl apply -f deploy/k8s/deployment.yaml
+# Create or update the runtime secret so optional camera support can be enabled without
+# committing sensitive values into the repo.
+kubectl -n weather create secret generic weather-secret \
+  --from-literal=WINDY_WEBCAMS_API_KEY="$WINDY_WEBCAMS_API_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# Apply the app manifests through Kustomize so config and workload changes stay bundled.
+kubectl apply -k deploy/k8s
 
 # Override the deployment image to the exact image tag built in this script for traceable rollout.
 kubectl -n weather set image deployment/weather-app weather-app="${IMAGE_URI}:${IMAGE_TAG}"
@@ -173,6 +174,7 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
 
 # Apply the custom Prometheus alert rules for the weather app.
 kubectl apply -f deploy/monitoring/weather-alerts.yaml
+kubectl apply -f deploy/monitoring/grafana-dashboard-weather-app.yaml
 
 # Ensure the KEDA namespace exists before installing the autoscaling operator.
 kubectl create namespace keda --dry-run=client -o yaml | kubectl apply -f -
@@ -217,6 +219,7 @@ echo
 echo "Done"
 echo "Image: ${IMAGE_URI}:${IMAGE_TAG}"
 echo "Service IP: ${EXTERNAL_IP:-pending}"
+echo "City cameras: $([[ -n "$WINDY_WEBCAMS_API_KEY" ]] && echo enabled || echo disabled)"
 echo "Kibana user: elastic"
 echo "Kibana password: ${KIBANA_PASSWORD}"
 echo "Checks:"

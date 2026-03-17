@@ -3,6 +3,7 @@
 This repo delivers the task end to end:
 
 - Terraform provisions GKE, networking, and a node pool
+- Terraform also creates the Artifact Registry repository used by CI/CD
 - Flask weather app runs on Kubernetes
 - GitHub Actions CI builds/tests and pushes SHA-tagged images
 - GitHub Actions CD deploys the exact SHA
@@ -40,17 +41,26 @@ GitHub secrets:
 
 - `GCP_PROJECT_ID`
 - `GCP_SA_KEY`
+- `WINDY_WEBCAMS_API_KEY` (optional, for live city cameras in CD deployments)
+
+Local development:
+
+- Create `apps/weather/.env` from `apps/weather/.env.example`
+- Put `WINDY_WEBCAMS_API_KEY` in that file for local camera testing
+- `.env` is ignored by git and excluded from Docker builds
 
 ## Quickstart
 
 ### Deploy using script:
 
 ```bash
-./deploy.sh
+./setup.sh
 
 # then follow the instructions in the script output
 
 ```
+
+`setup.sh` will prompt for an optional `WINDY_WEBCAMS_API_KEY`, or you can export it first and let the script reuse that value.
 
 ### Deploy manually:
 
@@ -65,14 +75,16 @@ kubectl get nodes
 
 ### 2. Deploy the app
 
-Apply the namespace first, then the app resources:
+Apply the namespace first, create the runtime secret, then apply the Kustomize bundle:
 
 ```bash
+export WINDY_WEBCAMS_API_KEY="" # optional
+
 kubectl apply -f deploy/k8s/namespace.yaml
-kubectl apply -f deploy/k8s/configmap.yaml
-kubectl apply -f deploy/k8s/secret.yaml
-kubectl apply -f deploy/k8s/service.yaml
-kubectl apply -f deploy/k8s/deployment.yaml
+kubectl -n weather create secret generic weather-secret \
+  --from-literal=WINDY_WEBCAMS_API_KEY="$WINDY_WEBCAMS_API_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -k deploy/k8s
 kubectl -n weather rollout status deployment/weather-app
 kubectl -n weather get svc weather-service
 ```
@@ -88,7 +100,15 @@ Test:
 ```text
 http://<EXTERNAL-IP>/healthz
 http://<EXTERNAL-IP>/weather?city=Berlin
+http://<EXTERNAL-IP>/city-camera?city=Berlin
 ```
+
+Optional live camera support:
+
+- Set `WINDY_WEBCAMS_API_KEY` to enable public city camera lookup through Windy Webcams
+- CD recreates `weather-secret` from the GitHub Actions secret each time it deploys
+- Camera availability depends on a public webcam existing near the selected city
+- Default weather/geocoding timeout is `12` seconds; camera lookups use a shorter `6` second timeout
 
 ### 3. Install monitoring
 
@@ -98,6 +118,7 @@ helm repo update
 kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring
 kubectl apply -f deploy/monitoring/weather-alerts.yaml
+kubectl apply -f deploy/monitoring/grafana-dashboard-weather-app.yaml
 ```
 
 Grafana:
@@ -106,6 +127,8 @@ Grafana:
 kubectl -n monitoring port-forward svc/kube-prometheus-stack-grafana 3000:80
 kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 -d && echo
 ```
+
+The stack auto-loads the `Weather App Overview` dashboard from `deploy/monitoring/grafana-dashboard-weather-app.yaml`.
 
 ### 4. Install KEDA
 
@@ -158,11 +181,16 @@ kubernetes.namespace_name : "weather"
   - pushes `weather-app:<commit-sha>` and `weather-app:stable` on `main`
 - CD: `.github/workflows/cd.yaml`
   - runs after successful CI
+  - recreates `weather-secret` from GitHub secrets
+  - reapplies the Kustomize app bundle
   - deploys the exact commit SHA image
 
 ## Destroy
 
 ```bash
+./setup.sh --destroy
+
+# or destroy manually:
 terraform -chdir=infra destroy -auto-approve
 gcloud container clusters list --project devops-486417
 terraform -chdir=infra state list

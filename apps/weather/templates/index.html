@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Weather Atlas</title>
+    <meta
+      name="description"
+      content="A cinematic weather dashboard for discovering current conditions and the next 24 hours."
+    >
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+  </head>
+  <body data-default-city="{{ default_city }}">
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Weather Atlas</p>
+          <h1>Chase the mood of the next 24 hours.</h1>
+          <p class="hero-text">
+            Search any city and explore the atmosphere, temperature arc, and local rhythm in one
+            polished view.
+          </p>
+          <form id="search-form" class="search-form" autocomplete="off">
+            <label class="sr-only" for="city-input">Search for a city</label>
+            <input
+              id="city-input"
+              name="city"
+              type="search"
+              placeholder="Search a city"
+              value="{{ default_city }}"
+              spellcheck="false"
+            >
+            <button id="search-button" type="submit">Explore</button>
+          </form>
+          <p id="search-hint" class="search-hint">Launching with {{ default_city }}.</p>
+        </div>
+        <aside class="hero-aside current-panel">
+          <p class="panel-label">Now arriving</p>
+          <h2 id="hero-city">Loading city...</h2>
+          <p id="hero-summary" class="hero-summary">Collecting the latest conditions.</p>
+          <div class="hero-temp-row">
+            <span id="hero-temperature" class="hero-temperature">--</span>
+            <span id="hero-icon" class="hero-icon">Forecast</span>
+          </div>
+          <p id="hero-updated" class="hero-updated">Preparing your weather brief.</p>
+        </aside>
+      </header>
+
+      <main class="content-grid">
+        <section class="card metrics-card">
+          <div class="section-heading">
+            <p class="section-kicker">Current conditions</p>
+            <h3>Travel notes for right now</h3>
+          </div>
+          <div class="metrics-grid">
+            <article class="metric">
+              <span class="metric-label">Temperature</span>
+              <strong id="metric-temperature" class="metric-value">--</strong>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Humidity</span>
+              <strong id="metric-humidity" class="metric-value">--</strong>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Wind</span>
+              <strong id="metric-wind" class="metric-value">--</strong>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Local time</span>
+              <strong id="metric-time" class="metric-value">--</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="card chart-card">
+          <div class="section-heading">
+            <p class="section-kicker">Temperature trend</p>
+            <h3>The next 24 hours at a glance</h3>
+          </div>
+          <div class="chart-wrap">
+            <svg
+              id="trend-chart"
+              class="trend-chart"
+              viewBox="0 0 720 260"
+              role="img"
+              aria-labelledby="trend-chart-title"
+            >
+              <title id="trend-chart-title">24 hour temperature trend</title>
+            </svg>
+          </div>
+          <div id="chart-legend" class="chart-legend">
+            <span>Waiting for a forecast...</span>
+          </div>
+        </section>
+
+        <section class="card camera-card">
+          <div class="section-heading">
+            <p class="section-kicker">Live from the city</p>
+            <h3>Catch the street-level mood</h3>
+          </div>
+          <div id="camera-panel" class="camera-panel" aria-live="polite">
+            <div class="empty-state">
+              <p>Looking for a public live camera near this city.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card rail-card">
+          <div class="section-heading">
+            <p class="section-kicker">Hourly outlook</p>
+            <h3>A compact city timeline</h3>
+          </div>
+          <div id="hourly-rail" class="hourly-rail" aria-live="polite">
+            <div class="empty-state">
+              <p>Hourly details will appear here once the city forecast loads.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <section id="feedback-panel" class="feedback-panel" aria-live="polite">
+        <p id="feedback-message">Loading weather details...</p>
+      </section>
+    </div>
+  </body>
+</html>

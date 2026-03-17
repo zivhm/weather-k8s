@@ -16,6 +16,13 @@ resource "google_compute_subnetwork" "subnet" {
   network       = google_compute_network.vpc.id
 }
 
+resource "google_artifact_registry_repository" "weather" {
+  location      = var.region
+  repository_id = var.artifact_repository
+  format        = "DOCKER"
+  description   = "Docker images for the weather app"
+}
+
 # cluster
 resource "google_container_cluster" "primary" {
   name                     = var.cluster_name
