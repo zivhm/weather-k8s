@@ -51,7 +51,7 @@ Local development:
 
 ## Quickstart
 
-### Deploy using script:
+### Deploy using script
 
 ```bash
 ./setup.sh
@@ -62,7 +62,7 @@ Local development:
 
 `setup.sh` will prompt for an optional `WINDY_WEBCAMS_API_KEY`, or you can export it first and let the script reuse that value.
 
-### Deploy manually:
+### Deploy manually
 
 ### 1. Create the cluster
 
