@@ -124,11 +124,26 @@ kubectl apply -f deploy/monitoring/grafana-dashboard-weather-app.yaml
 Grafana:
 
 ```bash
+kubectl -n monitoring get pods
+kubectl -n monitoring get svc
 kubectl -n monitoring port-forward svc/kube-prometheus-stack-grafana 3000:80
 kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 -d && echo
 ```
 
-The stack auto-loads the `Weather App Overview` dashboard from `deploy/monitoring/grafana-dashboard-weather-app.yaml`.
+Open Grafana at `http://localhost:3000` with user `admin`. The stack auto-loads the `Weather App Overview` dashboard from `deploy/monitoring/grafana-dashboard-weather-app.yaml`.
+
+Prometheus:
+
+```bash
+kubectl -n monitoring port-forward svc/kube-prometheus-stack-prometheus 9090:9090
+kubectl -n monitoring get prometheusrule
+```
+
+Open Prometheus at `http://localhost:9090` and try:
+
+```promql
+sum(kube_deployment_status_replicas_available{namespace="weather",deployment="weather-app"})
+```
 
 ### 4. Install KEDA
 
@@ -139,6 +154,7 @@ kubectl create namespace keda --dry-run=client -o yaml | kubectl apply -f -
 helm upgrade --install keda kedacore/keda -n keda
 kubectl apply -f deploy/keda/scaledobject.yaml
 kubectl -n weather get scaledobject,hpa
+kubectl -n weather describe scaledobject weather-cpu-scaledobject
 ```
 
 Scale test:
@@ -163,11 +179,13 @@ helm upgrade --install fluent-bit fluent/fluent-bit -n logging -f deploy/logging
 Kibana:
 
 ```bash
+kubectl -n logging get pods
+kubectl -n logging get svc
 kubectl -n logging port-forward svc/kibana-kibana 5601:5601
 kubectl -n logging get secret weather-logs-master-credentials -o jsonpath="{.data.password}" | base64 -d && echo
 ```
 
-In Discover, use data view `weather-*` and filter:
+Open Kibana at `http://localhost:5601` with user `elastic`. In Discover, use data view `weather-*` and filter:
 
 ```text
 kubernetes.namespace_name : "weather"
